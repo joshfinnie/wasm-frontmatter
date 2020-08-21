@@ -1,10 +1,12 @@
 [package]
 name = "wasm-frontmatter"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Josh Finnie <josh@jfin.us>"]
 edition = "2018"
 description = "wasm-frontmatter extracts the frontmatter data from markdown."
 license = "MIT"
+repository = "git+https://github.com/joshfinnie/wasm-frontmatter.git"
+homepage = "https://github.com/joshfinnie/wasm-frontmatter"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
