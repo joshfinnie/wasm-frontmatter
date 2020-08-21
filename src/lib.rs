@@ -42,7 +42,6 @@ fn parse_excerpt(markdown_input: &str) -> Option<&str> {
     if splits.is_empty() {
         return None;
     };
-    println!("{:?}", splits);
     Some(splits[0])
 }
 
@@ -59,7 +58,7 @@ pub fn matter(markdown_input: &str) -> JsValue {
     utils::set_panic_hook();
 
     let (frontmatter, content) = parse_frontmatter(markdown_input);
-    let excerpt = parse_excerpt(markdown_input);
+    let excerpt = parse_excerpt(content);
     let data = Data{
         content: content.to_string(),
         data: frontmatter,
