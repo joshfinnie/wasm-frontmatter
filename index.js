@@ -50,7 +50,7 @@ console.log(`{
     description: 'Front matter',
     categories: [ 'test', 'categories' ]
   }
-  excerpt: ''
+  excerpt: '\nLet's add an excerpt!\n\n'
 }`);
 console.log(matter(long_markdown));
 console.log("\n");
