@@ -1,6 +1,6 @@
 [package]
 name = "wasm-frontmatter"
-version = "0.2.0"
+version = "0.2.2"
 authors = ["Josh Finnie <josh@jfin.us>"]
 edition = "2018"
 description = "wasm-frontmatter extracts the frontmatter data from markdown."
