@@ -25,14 +25,17 @@ fn extract_frontmatter(markdown_input: &str) -> Option<String> {
 fn parse_frontmatter(markdown_input: &str) -> (serde_yaml::Value, &str) {
     let fm = match markdown_input.starts_with("---\n") {
         true => extract_frontmatter(markdown_input),
-        false => None
+        false => None,
     };
 
     match fm {
         None => (serde_yaml::from_str("{}").unwrap(), markdown_input),
         Some(data) => {
             let frontmatter_length = data.chars().count() + 8;
-            (serde_yaml::from_str(&data).unwrap(), &markdown_input[frontmatter_length..])
+            (
+                serde_yaml::from_str(&data).unwrap(),
+                &markdown_input[frontmatter_length..],
+            )
         }
     }
 }
@@ -59,13 +62,13 @@ pub fn matter(markdown_input: &str) -> JsValue {
 
     let (frontmatter, content) = parse_frontmatter(markdown_input);
     let excerpt = parse_excerpt(content);
-    let data = Data{
+    let data = Data {
         content: content.to_string(),
         data: frontmatter,
         excerpt: match excerpt {
             None => "".to_string(),
-            Some(data) => data.to_string()
-        }
+            Some(data) => data.to_string(),
+        },
     };
 
     JsValue::from_serde(&data).unwrap()

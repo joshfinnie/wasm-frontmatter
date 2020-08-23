@@ -6,3 +6,6 @@ test:
 	
 publish:
 	wasm-pack publish
+
+fmt:
+	cargo fmt
