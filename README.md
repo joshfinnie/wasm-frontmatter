@@ -2,7 +2,7 @@
 
 `wasm-frontmatter` extracts the frontmatter data from markdown.
 
-[![Tests](https://github.com/joshfinnie/wasm-frontmatter/workflows/Tests/badge.svg)](https://github.com/joshfinnie/wasm-frontmatter/actions?query=workflow%3ATests)
+[![Tests](https://github.com/joshfinnie/wasm-frontmatter/workflows/Tests/badge.svg)](https://github.com/joshfinnie/wasm-frontmatter/actions?query=workflow%3ATests) [![NPM](https://img.shields.io/npm/v/wasm-frontmatter)](https://www.npmjs.com/package/wasm-frontmatter)
 
 ## Install
 
