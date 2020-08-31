@@ -57,3 +57,53 @@ console.log("\n");
 
 data = matter(long_markdown);
 console.log(data.data.title)
+console.log("\n");
+
+console.log("################ TEST 4 ################");
+console.log(`{
+  content: 'this is an excerpt!\n\n---\n\nthis is content!',
+  data: {}
+  excerpt: 'this is an excerpt!\n\n'
+}`);
+console.log(matter("this is an excerpt!\n---\nthis is a content!"))
+
+console.log("################ TEST 5 ################");
+opt = {excerpt: true};
+
+console.log(matter(long_markdown, opt));
+console.log("should have excerpt!\n");
+
+console.log(matter(long_markdown));
+console.log("should not have excerpt!\n");
+
+console.log("################ TEST 6 ################");
+const long_markdown_different_separator = `---
+title: "long form content"
+description: "Front matter"
+categories:
+  - "test"
+  - "categories"
+---
+
+Let's add an excerpt!
+
+<!-- end -->
+
+This is content`;
+
+opt = {excerpt_separator: "<!-- end -->"};
+
+console.log(matter(long_markdown_different_separator, opt));
+console.log("should have excerpt!\n");
+
+console.log(matter(long_markdown_different_separator, {excerpt: true, excerpt_separator: "<!-- end -->"}));
+console.log("should have excerpt!\n");
+
+console.log("################ TEST 7 ################");
+const fun_markdown = `~~~
+title: "fun markdown"
+~~~
+Content`;
+
+console.log(matter(fun_markdown, {delimiters: "~~~"}));
+console.log("should not have excerpt!\n");
