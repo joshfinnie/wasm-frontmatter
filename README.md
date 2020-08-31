@@ -2,6 +2,8 @@
 
 `wasm-frontmatter` extracts the frontmatter data from markdown.
 
+![Tests](https://github.com/joshfinnie/wasm-frontmatter/workflows/Tests/badge.svg)
+
 ## Install
 
 ```
