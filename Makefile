@@ -9,3 +9,6 @@ publish:
 
 fmt:
 	cargo fmt
+
+clippy:
+	touch src/lib.rs ; cargo clippy

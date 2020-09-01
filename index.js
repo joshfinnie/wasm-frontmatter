@@ -107,3 +107,6 @@ Content`;
 
 console.log(matter(fun_markdown, {delimiters: "~~~"}));
 console.log("should not have excerpt!\n");
+
+console.log("################ TEST 8 ################");
+console.log(matter("---\nfoo: bar\n---\ncontent", {bad: "data"}));
