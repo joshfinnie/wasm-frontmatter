@@ -1,7 +1,6 @@
 mod utils;
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -10,54 +9,45 @@ use wasm_bindgen::prelude::*;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-fn extract_frontmatter(markdown_input: &str, delimiter: String) -> Option<String> {
+fn extract_frontmatter(markdown_input: &str, delimiter: String) -> Option<&str> {
     let beginning_frontmatter = &markdown_input[4..];
-    let fm_end = beginning_frontmatter.find(&format!("{}\n", delimiter));
-    if fm_end.is_none() {
-        return None;
-    };
+    beginning_frontmatter.find(&format!("{}\n", delimiter))?;
     let splits: Vec<&str> = beginning_frontmatter.split(&delimiter).collect();
     if splits.is_empty() {
         return None;
     };
-    Some(splits[0].to_string())
+    Some(splits[0])
 }
 
-fn parse_frontmatter(
-    markdown_input: &str,
-    delimiters: Option<String>,
-) -> (serde_yaml::Value, &str) {
-    let delimiter = delimiters.unwrap_or("---".to_string());
-    let fm = match markdown_input.starts_with(&format!("{}\n", delimiter)) {
-        true => extract_frontmatter(markdown_input, delimiter),
-        false => None,
-    };
-
-    match fm {
-        None => (serde_yaml::from_str("{}").unwrap(), markdown_input),
-        Some(data) => {
-            let frontmatter_length = data.chars().count() + 8;
-            (
-                serde_yaml::from_str(&data).unwrap(),
-                &markdown_input[frontmatter_length..],
-            )
-        }
+fn parse_frontmatter(markdown_input: &str, delimiters: String) -> (serde_yaml::Value, &str) {
+    if markdown_input.starts_with(&format!("{}\n", delimiters)) {
+        return match extract_frontmatter(markdown_input, delimiters) {
+            None => (serde_yaml::from_str("{}").unwrap(), markdown_input),
+            Some(data) => {
+                let frontmatter_length = data.chars().count() + 8;
+                (
+                    serde_yaml::from_str(&data).unwrap(),
+                    &markdown_input[frontmatter_length..],
+                )
+            }
+        };
     }
+    (serde_yaml::from_str("{}").unwrap(), markdown_input)
 }
 
-fn parse_excerpt(markdown_input: &str, separator: String) -> String {
+fn parse_excerpt(markdown_input: &str, separator: String) -> &str {
     let splits: Vec<&str> = markdown_input.split(&separator).collect();
     if splits.len() == 1 {
-        return "".to_string();
+        return "";
     };
-    splits[0].to_string()
+    splits[0]
 }
 
 #[derive(Serialize)]
-struct Data {
-    content: String,
+struct Output<'a> {
+    content: &'a str,
     data: serde_yaml::Value,
-    excerpt: String,
+    excerpt: &'a str,
     //isEmpty: bool,
 }
 
@@ -68,19 +58,38 @@ struct Opt {
     excerpt_separator: Option<String>,
 }
 
+impl Default for Opt {
+    fn default() -> Self {
+        Opt {
+            delimiters: Some(String::from("---")),
+            excerpt: Some(false),
+            excerpt_separator: Some(String::from("---")),
+        }
+    }
+}
+
 impl Opt {
     fn new() -> Self {
         Opt {
-            delimiters: Some("---".to_string()),
+            delimiters: Some(String::from("---")),
             excerpt: Some(false),
-            excerpt_separator: Some("---".to_string()),
+            excerpt_separator: Some(String::from("---")),
         }
     }
-    fn extract_options(self) -> (Option<String>, bool, String) {
-        let delimiters = self.delimiters.clone();
-        let mut excerpt = self.excerpt.clone().unwrap_or(false);
-        let excerpt_separator = self.excerpt_separator.clone().unwrap_or("---".to_string());
-        if excerpt_separator != "---".to_string() {
+    fn extract_options(self) -> (String, bool, String) {
+        let delimiters = match self.delimiters {
+            None => String::from("---"),
+            Some(data) => data,
+        };
+        let mut excerpt = match self.excerpt {
+            None => false,
+            Some(data) => data,
+        };
+        let excerpt_separator = match self.excerpt_separator {
+            None => String::from("---"),
+            Some(data) => data,
+        };
+        if excerpt_separator != "---" {
             excerpt = true;
         }
 
@@ -88,45 +97,33 @@ impl Opt {
     }
 }
 
-impl fmt::Display for Opt {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "({}, {}, {})",
-            self.delimiters.clone().unwrap_or("---".to_string()),
-            self.excerpt.unwrap_or(false),
-            self.excerpt_separator.clone().unwrap_or("---".to_string()),
-        )
-    }
-}
-
 #[wasm_bindgen]
 pub fn matter(markdown_input: &str, opt: JsValue) -> JsValue {
     utils::set_panic_hook();
 
-    let options: Opt = match opt.is_object() {
-        true => opt.into_serde().unwrap(),
-        false => Opt::new(),
+    let options: Opt = match opt.into_serde() {
+        Ok(data) => data,
+        _ => Opt::new(),
     };
 
     let (delimiters, excerpt, excerpt_separator) = options.extract_options();
-    let (frontmatter, content) = parse_frontmatter(markdown_input, delimiters);
-    let data = Data {
-        content: content.to_string(),
-        data: frontmatter,
+    let (data, content) = parse_frontmatter(markdown_input, delimiters);
+    let output = Output {
+        content,
+        data,
         excerpt: match excerpt {
             true => parse_excerpt(content, excerpt_separator),
-            false => "".to_string(),
+            false => "",
         },
     };
 
-    JsValue::from_serde(&data).unwrap()
+    JsValue::from_serde(&output).unwrap()
 }
 
 #[test]
 fn test_parse_frontmatter() {
     let test_str = "---\ntitle: Home\n---\nOther stuff";
-    let (fm, content) = parse_frontmatter(test_str, None);
+    let (fm, content) = parse_frontmatter(test_str, "---".to_string());
 
     assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\ntitle: Home");
     assert_eq!(content.chars().count(), 11);
@@ -135,7 +132,7 @@ fn test_parse_frontmatter() {
 #[test]
 fn test_parse_frontmatter_with_custom_delimiter() {
     let test_str = "~~~\ntitle: Home\n~~~\nOther stuff";
-    let (fm, content) = parse_frontmatter(test_str, Some("~~~".to_string()));
+    let (fm, content) = parse_frontmatter(test_str, "~~~".to_string());
 
     assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\ntitle: Home");
     assert_eq!(content.chars().count(), 11);
@@ -145,7 +142,7 @@ fn test_parse_frontmatter_with_custom_delimiter() {
 fn test_extract_options() {
     let opt = Opt::new();
     let e = opt.extract_options();
-    assert_eq!(e, (Some("---".to_string()), false, "---".to_string()))
+    assert_eq!(e, ("---".to_string(), false, "---".to_string()))
 }
 
 #[test]
@@ -177,7 +174,7 @@ foo: bar
 This is an excerpt.
 ---
 This is content"#;
-    let (fm, content) = parse_frontmatter(test_str, None);
+    let (fm, content) = parse_frontmatter(test_str, "---".to_string());
     let options = Opt::new();
     let excerpt = parse_excerpt(content, options.excerpt_separator.unwrap());
     assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\nfoo: bar");
@@ -192,7 +189,7 @@ foo: bar
 This is a long excerpt with custom separator.
 <!-- end -->
 This is content"#;
-    let (fm, content) = parse_frontmatter(test_str, None);
+    let (fm, content) = parse_frontmatter(test_str, "---".to_string());
     let options = Opt {
         delimiters: Some("---".to_string()),
         excerpt: Some(true),
@@ -208,7 +205,7 @@ fn test_parse_frontmatter_with_no_frontmatter() {
     let test_str = r#"This is a long excerpt with custom separator.
 ---
 This is content"#;
-    let (fm, content) = parse_frontmatter(test_str, None);
+    let (fm, content) = parse_frontmatter(test_str, "---".to_string());
     let options = Opt::new();
     let excerpt = parse_excerpt(content, options.excerpt_separator.unwrap());
     assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\n{}");
@@ -220,7 +217,7 @@ fn test_parse_frontmatter_with_custom_excerpt_no_frontmatter() {
     let test_str = r#"This is a long excerpt with custom separator.
 <!-- end -->
 This is content"#;
-    let (fm, content) = parse_frontmatter(test_str, None);
+    let (fm, content) = parse_frontmatter(test_str, "---".to_string());
     let options = Opt {
         delimiters: Some("---".to_string()),
         excerpt: Some(true),
