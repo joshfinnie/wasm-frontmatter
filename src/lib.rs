@@ -1,7 +1,12 @@
+mod opts;
+mod parse;
 mod utils;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
+
+use parse::{parse_frontmatter, parse_excerpt};
+use opts::Opt;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -9,92 +14,12 @@ use wasm_bindgen::prelude::*;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-fn extract_frontmatter(markdown_input: &str, delimiter: String) -> Option<&str> {
-    let beginning_frontmatter = &markdown_input[4..];
-    beginning_frontmatter.find(&format!("{}\n", delimiter))?;
-    let splits: Vec<&str> = beginning_frontmatter.split(&delimiter).collect();
-    if splits.is_empty() {
-        return None;
-    };
-    Some(splits[0])
-}
-
-fn parse_frontmatter(markdown_input: &str, delimiters: String) -> (serde_yaml::Value, &str) {
-    if markdown_input.starts_with(&format!("{}\n", delimiters)) {
-        return match extract_frontmatter(markdown_input, delimiters) {
-            None => (serde_yaml::from_str("{}").unwrap(), markdown_input),
-            Some(data) => {
-                let frontmatter_length = data.chars().count() + 8;
-                (
-                    serde_yaml::from_str(&data).unwrap(),
-                    &markdown_input[frontmatter_length..],
-                )
-            }
-        };
-    }
-    (serde_yaml::from_str("{}").unwrap(), markdown_input)
-}
-
-fn parse_excerpt(markdown_input: &str, separator: String) -> &str {
-    let splits: Vec<&str> = markdown_input.split(&separator).collect();
-    if splits.len() == 1 {
-        return "";
-    };
-    splits[0]
-}
-
 #[derive(Serialize)]
 struct Output<'a> {
     content: &'a str,
     data: serde_yaml::Value,
     excerpt: &'a str,
     //isEmpty: bool,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Opt {
-    delimiters: Option<String>,
-    excerpt: Option<bool>,
-    excerpt_separator: Option<String>,
-}
-
-impl Default for Opt {
-    fn default() -> Self {
-        Opt {
-            delimiters: Some(String::from("---")),
-            excerpt: Some(false),
-            excerpt_separator: Some(String::from("---")),
-        }
-    }
-}
-
-impl Opt {
-    fn new() -> Self {
-        Opt {
-            delimiters: Some(String::from("---")),
-            excerpt: Some(false),
-            excerpt_separator: Some(String::from("---")),
-        }
-    }
-    fn extract_options(self) -> (String, bool, String) {
-        let delimiters = match self.delimiters {
-            None => String::from("---"),
-            Some(data) => data,
-        };
-        let mut excerpt = match self.excerpt {
-            None => false,
-            Some(data) => data,
-        };
-        let excerpt_separator = match self.excerpt_separator {
-            None => String::from("---"),
-            Some(data) => data,
-        };
-        if excerpt_separator != "---" {
-            excerpt = true;
-        }
-
-        (delimiters, excerpt, excerpt_separator)
-    }
 }
 
 #[wasm_bindgen]
