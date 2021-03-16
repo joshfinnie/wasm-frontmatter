@@ -128,7 +128,7 @@ fn test_parse_frontmatter() {
     let test_str = "---\ntitle: Home\n---\nOther stuff";
     let (fm, content) = parse_frontmatter(test_str, "---");
 
-    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\ntitle: Home");
+    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\ntitle: Home\n");
     assert_eq!(content.chars().count(), 11);
 }
 
@@ -137,7 +137,7 @@ fn test_parse_frontmatter_with_custom_delimiter() {
     let test_str = "~~~\ntitle: Home\n~~~\nOther stuff";
     let (fm, content) = parse_frontmatter(test_str, "~~~");
 
-    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\ntitle: Home");
+    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\ntitle: Home\n");
     assert_eq!(content.chars().count(), 11);
 }
 
@@ -181,7 +181,7 @@ This is content"#;
     let options = Opt::new();
     let excerpt_separator = options.excerpt_separator.unwrap();
     let excerpt = parse_excerpt(content, excerpt_separator.as_str());
-    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\nfoo: bar");
+    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\nfoo: bar\n");
     assert_eq!(excerpt.chars().count(), 20);
 }
 
@@ -201,7 +201,7 @@ This is content"#;
     };
     let excerpt_separator = options.excerpt_separator.unwrap();
     let excerpt = parse_excerpt(content, excerpt_separator.as_str());
-    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\nfoo: bar");
+    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\nfoo: bar\n");
     assert_eq!(excerpt.chars().count(), 46);
 }
 
@@ -214,7 +214,7 @@ This is content"#;
     let options = Opt::new();
     let excerpt_separator = options.excerpt_separator.unwrap();
     let excerpt = parse_excerpt(content, excerpt_separator.as_str());
-    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\n{}");
+    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\n{}\n");
     assert_eq!(excerpt.chars().count(), 46);
 }
 
@@ -231,6 +231,6 @@ This is content"#;
     };
     let excerpt_separator = options.excerpt_separator.unwrap();
     let excerpt = parse_excerpt(content, excerpt_separator.as_str());
-    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\n{}");
+    assert_eq!(serde_yaml::to_string(&fm).unwrap(), "---\n{}\n");
     assert_eq!(excerpt.chars().count(), 46);
 }
