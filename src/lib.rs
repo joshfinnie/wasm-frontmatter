@@ -100,7 +100,7 @@ impl Opt {
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = default)]
 pub fn matter(markdown_input: &str, opt: JsValue) -> JsValue {
     utils::set_panic_hook();
 
